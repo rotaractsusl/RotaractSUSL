@@ -8,6 +8,7 @@ import { images } from '../../../assets/images.js';
 import Footer from "../../components/Footer.jsx";
 import NavBar from "../../components/Navbar.jsx";
 import { ArrowLeft, MapPin, Calendar, Share2 } from 'lucide-react';
+import { toast } from "sonner";
 
 export default function ProjectDetailsPage() {
     const params = useParams();
@@ -89,7 +90,7 @@ export default function ProjectDetailsPage() {
         } else {
             // Fallback: copy to clipboard
             navigator.clipboard.writeText(window.location.href);
-            alert('Link copied to clipboard!');
+            toast.success('Link copied to clipboard!');
         }
     };
 
@@ -175,11 +176,11 @@ export default function ProjectDetailsPage() {
                                 About the Project
                             </h2>
                             <div className="space-y-4">
-                                <p className="font-poppins text-[#707070] text-base leading-[26px]">
+                                <p className="font-poppins text-[#707070] text-base leading-[26px] whitespace-pre-line">
                                     {project.description || 'This transformative initiative represents our commitment to Service Above Self, bringing together passionate Rotaractors to address critical needs in the Sabaragamuwa region. Through careful planning and dedicated execution, we\'ve created a sustainable impact that will benefit the community for years to come.'}
                                 </p>
                                 {project.longDescription && (
-                                    <p className="font-poppins text-[#707070] text-base leading-[26px]">
+                                    <p className="font-poppins text-[#707070] text-base leading-[26px] whitespace-pre-line">
                                         {project.longDescription}
                                     </p>
                                 )}
@@ -284,18 +285,22 @@ export default function ProjectDetailsPage() {
                         Project Gallery
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {project.galleryImages.slice(0, 6).map((image, index) => (
-                            <div
-                                key={index}
-                                className="h-[300px] rounded-[22px] overflow-hidden"
-                            >
-                                <img
-                                    src={image}
-                                    alt={`Gallery ${index + 1}`}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                            </div>
-                        ))}
+                        {project.galleryImages.map((image, index) => {
+                            // Handle both legacy string arrays and new object arrays
+                            const imageUrl = typeof image === 'string' ? image : image.url;
+                            return (
+                                <div
+                                    key={index}
+                                    className="h-[300px] rounded-[22px] overflow-hidden"
+                                >
+                                    <img
+                                        src={imageUrl}
+                                        alt={`Gallery ${index + 1}`}
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}

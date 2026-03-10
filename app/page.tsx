@@ -7,6 +7,8 @@ import ProjectCarousel from "./components/ProjectCarousel";
 // import GalleryGrid from './components/GalleryGrid'; // Unused in your snippet, but kept commented
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import MotionWrapper from "./components/MotionWrapper"; // Added animation wrapper
+import { motion } from "framer-motion";
 
 // Firebase Imports
 import { db } from "@/lib/firebase";
@@ -28,15 +30,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
-
-  // Relief stats state
-  const [reliefStats, setReliefStats] = useState({
-    totalRequests: 0,
-    pendingRequests: 0,
-    assignedRequests: 0,
-    fulfilledRequests: 0,
-  });
-
   useEffect(() => {
     setLoading(true);
     // Fetch ALL events/projects
@@ -80,24 +73,6 @@ export default function Home() {
 
     fetchGalleryImages();
   }, []);
-
-  useEffect(() => {
-    // Fetch relief request stats
-    const q = query(collection(db, "materialRequests"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const requests = snapshot.docs.map((doc) => doc.data());
-      setReliefStats({
-        totalRequests: requests.length,
-        pendingRequests: requests.filter((r) => r.status === "pending").length,
-        assignedRequests: requests.filter((r) => r.status === "assigned")
-          .length,
-        fulfilledRequests: requests.filter((r) => r.status === "fulfilled")
-          .length,
-      });
-    });
-    return () => unsubscribe();
-  }, []);
-
   // --- 2. Filtering Logic ---
 
   // Filter for "Our Projects" (Completed/Happened) - Sort Newest First
@@ -144,6 +119,7 @@ export default function Home() {
   // --- Dynamic Data (Monthly Stars) ---
   type MonthlyStar = {
     image: string;
+    images?: string[];
     name: string;
     faculty: string;
     quote: string;
@@ -154,6 +130,7 @@ export default function Home() {
   );
   const [rotaractorOfMonth, setRotaractorOfMonth] =
     useState<MonthlyStar | null>(null);
+  const [rotaractorFlyerIndex, setRotaractorFlyerIndex] = useState(0);
   useEffect(() => {
     // Fetch monthly stars from Firestore
     const fetchMonthlyStars = async () => {
@@ -168,6 +145,26 @@ export default function Home() {
     };
     fetchMonthlyStars();
   }, []);
+  const rotaractorFlyers = useMemo(() => {
+    if (!rotaractorOfMonth) return [];
+    if (
+      Array.isArray(rotaractorOfMonth.images) &&
+      rotaractorOfMonth.images.length > 0
+    ) {
+      return rotaractorOfMonth.images;
+    }
+    if (rotaractorOfMonth.image) return [rotaractorOfMonth.image];
+    return [];
+  }, [rotaractorOfMonth]);
+
+  useEffect(() => {
+    setRotaractorFlyerIndex(0);
+    if (rotaractorFlyers.length <= 1) return;
+    const intervalId = setInterval(() => {
+      setRotaractorFlyerIndex((prev) => (prev + 1) % rotaractorFlyers.length);
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, [rotaractorFlyers]);
   type LeadershipMember = {
     id: string;
     name?: string;
@@ -211,260 +208,9 @@ export default function Home() {
       {/* Navigation */}
       <Navbar currentPage="home" />
 
-      {/* Flood Relief Emergency Banner Section */}
-      <section
-        className="relative text-white py-16 px-4 overflow-hidden"
-        style={{
-          backgroundImage:
-            "linear-gradient(135deg, rgba(37,99,235,0.70), rgba(79,70,229,0.70), rgba(124,58,237,0.70)), url('https://res.cloudinary.com/dvqoiqzxe/image/upload/v1764693342/Image_fx_bwy0xx.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Left Content */}
-            <div className="space-y-6">
-              <div className="inline-block bg-red-500 text-white px-4 py-2 rounded-full font-poppins font-bold text-sm animate-pulse">
-                🚨 &apos;Embrace&apos; Flood Relief Campaign
-              </div>
-
-              <div>
-                <h2 className="font-playfair font-bold text-4xl lg:text-5xl leading-tight mb-2">
-                  Embrace - Hold their future with your heart
-                </h2>
-                <p className="font-playfair font-medium text-xl lg:text-2xl text-blue-100 italic">
-                  &quot;ඔවුන්ගේ අනාගතය ඔබේ හදවතින් වැළඳගන්න&quot;
-                </p>
-              </div>
-
-              <p className="font-poppins text-lg text-blue-50 leading-relaxed">
-                Devastating floods have affected hundreds of schools across Sri
-                Lanka. Students have lost books, stationery, and essential
-                learning materials.{" "}
-                <span className="font-bold text-white">
-                  Your help can restore hope and education.
-                </span>
-              </p>
-
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="font-playfair font-bold text-3xl">
-                      {reliefStats.totalRequests}
-                    </p>
-                    <p className="font-poppins text-sm text-blue-100">
-                      Total Requests
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-playfair font-bold text-3xl">
-                      {reliefStats.pendingRequests}
-                    </p>
-                    <p className="font-poppins text-sm text-blue-100">
-                      Pending Requests
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-playfair font-bold text-3xl">
-                      {reliefStats.fulfilledRequests}
-                    </p>
-                    <p className="font-poppins text-sm text-blue-100">
-                      Fulfilled
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="/relief-requests"
-                  className="bg-white text-blue-600 px-8 py-4 rounded-lg font-poppins font-bold text-lg hover:bg-blue-50 transition shadow-xl flex items-center justify-center gap-2 group"
-                >
-                  <svg
-                    className="w-6 h-6 group-hover:scale-110 transition"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  Request Material Help
-                </a>
-                <a
-                  href="/relief-requests"
-                  className="bg-pink-600 text-white px-8 py-4 rounded-lg font-poppins font-bold text-lg hover:bg-pink-700 transition shadow-xl flex items-center justify-center gap-2 group"
-                >
-                  <svg
-                    className="w-6 h-6 group-hover:scale-110 transition"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Donate Materials Now
-                </a>
-              </div>
-
-              <p className="font-poppins text-sm text-blue-100 italic">
-                💙 Every donation counts. Together, we can help students return
-                to learning.
-              </p>
-            </div>
-
-            {/* Right Visual */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="bg-white/20 backdrop-blur-md rounded-2xl p-8 border border-white/30 shadow-2xl">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4 bg-white/10 p-4 rounded-lg">
-                      <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-2xl">
-                        📚
-                      </div>
-                      <div>
-                        <p className="font-poppins font-bold">
-                          Exercise Books
-                        </p>
-                        <p className="font-poppins text-xs text-blue-100 leading-tight">
-                          A5 & CR (80, 120, 160+ pgs)
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 bg-white/10 p-4 rounded-lg">
-                      <div className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center text-2xl">
-                        🎒
-                      </div>
-                      <div>
-                        <p className="font-poppins font-bold">School Bags</p>
-                        <p className="font-poppins text-xs text-blue-100 leading-tight">
-                          For students of all ages
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 bg-white/10 p-4 rounded-lg">
-                      <div className="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center text-2xl">
-                        ✏️
-                      </div>
-                      <div>
-                        <p className="font-poppins font-bold">Stationery</p>
-                        <p className="font-poppins text-xs text-blue-100 leading-tight">
-                          Pens, pencils, math sets, rulers
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 bg-white/10 p-4 rounded-lg">
-                      <div className="w-12 h-12 bg-purple-400 rounded-full flex items-center justify-center text-2xl">
-                        🍱
-                      </div>
-                      <div>
-                        <p className="font-poppins font-bold">Other Essentials</p>
-                        <p className="font-poppins text-xs text-blue-100 leading-tight">
-                          Water bottles, lunch boxes
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating Elements */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-yellow-400 rounded-full opacity-20 animate-bounce"></div>
-                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-pink-400 rounded-full opacity-20 animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Xmasora Promotional Banner */}
-      <section className="relative bg-gradient-to-r from-[#0f172a] via-[#312e81] to-[#0f172a] text-white shadow-xl relative z-20 border-b border-white/10 mt-4 overflow-hidden">
-        {/* Snow Animation Styles */}
-        <style jsx>{`
-          @keyframes snowfall {
-            0% {
-              transform: translateY(-10px) translateX(0) rotate(0deg);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(100vh) translateX(20px) rotate(360deg);
-              opacity: 0;
-            }
-          }
-          .snowflake {
-            position: absolute;
-            top: -10px;
-            color: white;
-            opacity: 0.8;
-            pointer-events: none;
-            animation-name: snowfall;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-          }
-        `}</style>
-
-        {/* Snowflakes */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(30)].map((_, i) => (
-            <div
-              key={i}
-              className="snowflake"
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDuration: `${Math.random() * 5 + 5}s`,
-                animationDelay: `${Math.random() * 5}s`,
-                fontSize: `${Math.random() * 15 + 10}px`,
-                opacity: Math.random() * 0.5 + 0.3,
-              }}
-            >
-              ❄
-            </div>
-          ))}
-        </div>
-
-        <a
-          href="https://xmasora.rotaractsusl.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative z-10 block max-w-7xl mx-auto px-4 py-16 flex flex-col md:flex-row items-center justify-center gap-6 hover:opacity-95 transition-opacity group text-center md:text-left"
-        >
-          <span className="text-5xl md:text-6xl animate-bounce shadow-lg drop-shadow-2xl">🎄</span>
-          
-          <div className="flex flex-col items-center md:items-start">
-            <h3 className="font-playfair font-bold text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-200 mb-8 pb-2 leading-relaxed drop-shadow-md">
-              Xmasora 2025
-            </h3>
-            <p className="font-poppins font-medium text-lg md:text-xl text-blue-100 max-w-2xl">
-              Experience the magic of the season! Join our Flyer Designing Competition & more.
-            </p>
-          </div>
-
-          <div className="mt-4 md:mt-0 flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full transition-all group-hover:scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            <span className="font-bold text-yellow-300 text-lg tracking-wide">Visit Website</span>
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </div>
-        </a>
-      </section>
-
       {/* Hero Section */}
-      <section className="relative min-h-[600px] lg:min-h-[750px] flex items-center px-4 lg:px-16 pt-24 pb-16">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <section className="relative min-h-[600px] lg:min-h-[750px] flex items-start px-4 lg:px-16 pt-10 lg:pt-14 pb-16">
+        <MotionWrapper className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <div className="space-y-6">
             <h1 className="font-playfair font-medium text-4xl lg:text-5xl leading-tight">
@@ -546,14 +292,14 @@ export default function Home() {
               className="absolute top-10 right-10 w-2.5 h-2.5 z-5"
             />
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Values Banner */}
       <section className="bg-pink-600 py-12 lg:py-16">
         <div className="max-w-[1300px] mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Service */}
-          <div className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl">
+          <MotionWrapper delay={0.1} whileHover={{ y: -10, transition: { duration: 0.2 } }} className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] hover:shadow-2xl">
             <img
               src={images.imgIcons8Heart601}
               alt="Service"
@@ -566,10 +312,10 @@ export default function Home() {
             <p className="font-poppins text-[15px] text-[#625f5f] leading-relaxed">
               Dedicated to serving our community and making a positive impact.
             </p>
-          </div>
+          </MotionWrapper>
 
           {/* Fellowship */}
-          <div className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl">
+          <MotionWrapper delay={0.2} whileHover={{ y: -10, transition: { duration: 0.2 } }} className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] hover:shadow-2xl">
             <img
               src={images.imgIcons8UserAccount641}
               alt="Fellowship"
@@ -582,10 +328,10 @@ export default function Home() {
             <p className="font-poppins text-[15px] text-[#625f5f] leading-relaxed">
               Building lasting friendships and professional networks.
             </p>
-          </div>
+          </MotionWrapper>
 
           {/* Leadership */}
-          <div className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl">
+          <MotionWrapper delay={0.3} whileHover={{ y: -10, transition: { duration: 0.2 } }} className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] hover:shadow-2xl">
             <img
               src={images.imgIcons8Leadership481}
               alt="Leadership"
@@ -598,10 +344,10 @@ export default function Home() {
             <p className="font-poppins text-[15px] text-[#625f5f] leading-relaxed">
               Developing future leaders through hands-on experience.
             </p>
-          </div>
+          </MotionWrapper>
 
           {/* Excellence */}
-          <div className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl">
+          <MotionWrapper delay={0.4} whileHover={{ y: -10, transition: { duration: 0.2 } }} className="bg-white rounded-[33px] shadow-lg p-6 flex flex-col min-h-[220px] hover:shadow-2xl">
             <img
               src={images.imgIcons8Badge501}
               alt="Excellence"
@@ -614,13 +360,13 @@ export default function Home() {
             <p className="font-poppins text-[15px] text-[#625f5f] leading-relaxed">
               Striving for excellence in everything we do.
             </p>
-          </div>
+          </MotionWrapper>
         </div>
       </section>
 
       {/* Who are we Section */}
       <section id="about" className="bg-[#e9e9e9] py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 lg:px-16">
+        <MotionWrapper className="max-w-7xl mx-auto px-4 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
               <h2 className="font-playfair font-medium text-4xl lg:text-5xl text-black mb-6">
@@ -667,12 +413,12 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Statistics */}
       <section className="bg-[#e9e9e9] pb-16">
-        <div className="max-w-6xl mx-auto px-4">
+        <MotionWrapper className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             <div>
               <p className="font-prata text-5xl text-text-pink-600 mb-2">1+</p>
@@ -701,7 +447,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Join Rotaract Banner */}
@@ -712,8 +458,7 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/60"></div>
-
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+        <MotionWrapper className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
           <h2 className="font-playfair font-medium text-3xl lg:text-5xl text-white mb-4">
             Be the Change.{" "}
             <span className="text-text-pink-600">Join Rotaract!</span>
@@ -730,12 +475,12 @@ export default function Home() {
           >
             Join Us
           </a>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Our Projects (COMPLETED PROJECTS CAROUSEL) */}
       <section id="projects" className="py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 lg:px-16">
+        <MotionWrapper className="max-w-7xl mx-auto px-4 lg:px-16">
           <h2 className="font-playfair font-medium text-4xl lg:text-5xl text-black text-center mb-8">
             Our Projects
           </h2>
@@ -766,12 +511,12 @@ export default function Home() {
               <ProjectCarousel projects={completedProjects as any} />
             )}
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Upcoming Projects (DYNAMIC GRID) */}
       <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4">
+        <MotionWrapper className="max-w-7xl mx-auto px-4">
           {/* Outer pink border container */}
           <div className="bg-pink-600 rounded-[51px] p-1">
             {/* Inner white container */}
@@ -799,8 +544,11 @@ export default function Home() {
                     key={project.id}
                     className="block"
                   >
-                    <div
-                      className="bg-black rounded-[41px] h-[300px] relative overflow-hidden flex items-end group cursor-pointer"
+                    <MotionWrapper
+                      delay={0.1}
+                      variant="fadeInUp"
+                      whileHover={{ scale: 1.03 }}
+                      className="bg-black rounded-[41px] h-[300px] relative overflow-hidden flex items-end group cursor-pointer transition-transform"
                     >
                       {/* Image Background */}
                       <img
@@ -823,7 +571,7 @@ export default function Home() {
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </MotionWrapper>
                   </Link>
                 ))}
 
@@ -840,12 +588,12 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Cherished Memories Header */}
       <section id="gallery" className="bg-pink-600 py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+        <MotionWrapper className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="font-playfair font-medium text-4xl lg:text-5xl text-white mb-4">
             Cherished Memories
           </h2>
@@ -855,12 +603,12 @@ export default function Home() {
             energy from our projects, reflecting the tangible impact and
             unforgettable memories we create together.
           </p>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Gallery Grid - Separate Grey Container */}
       <section className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
+        <MotionWrapper className="max-w-7xl mx-auto px-4">
           <div className="bg-[#d9d9d9] rounded-[43px] py-12 px-6">
             {galleryLoading ? (
               <div className="text-center py-10">
@@ -869,16 +617,18 @@ export default function Home() {
             ) : galleryImages.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {galleryImages.map((img, index) => (
-                  <div
+                  <MotionWrapper
                     key={index}
+                    delay={index * 0.1} // Staggered delay for each image
+                    variant="scaleUp" // Using scaleUp for a nice pop effect
                     className="rounded-[20px] overflow-hidden bg-gray-300 aspect-square"
                   >
                     <img
                       src={img.url || images.imgRectangle20}
                       alt={`Gallery ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                     />
-                  </div>
+                  </MotionWrapper>
                 ))}
               </div>
             ) : (
@@ -896,12 +646,12 @@ export default function Home() {
               </a>
             </div>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Service Stars */}
       <section className="bg-[#eeeeee] py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+        <MotionWrapper className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="font-playfair font-medium text-4xl lg:text-5xl text-black mb-4">
             Our Service Stars
           </h2>
@@ -917,7 +667,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Director of the Month (Dynamic) */}
-            <div className="bg-pink-600 rounded-[37px] shadow-lg p-8 relative flex flex-col">
+            <MotionWrapper delay={0.1} variant="fadeInLeft" whileHover={{ y: -5 }} className="bg-pink-600 rounded-[37px] shadow-lg p-8 relative flex flex-col transition-shadow hover:shadow-2xl">
               <p className="font-playfair font-medium text-[32px] text-white mb-1">
                 Director
               </p>
@@ -931,21 +681,21 @@ export default function Home() {
                     : "https://placehold.co/300x300?text=Director+of+Month"
                 }
                 alt="Director of the Month"
-                className="bg-white rounded-[32px] h-[320px] mb-6 flex-shrink-0 w-full object-cover"
+                className="rounded-[32px] h-[360px] lg:h-[420px] mb-6 flex-shrink-0 w-full object-contain"
               />
               <p className="font-playfair font-medium text-[28px] text-white mb-1">
-                {directorOfMonth?.name || "Director Name"}
+                {directorOfMonth?.name || "\u00A0"}
               </p>
               <p className="font-poppins text-[19px] text-[#d9d9d9] mb-6">
-                {directorOfMonth?.faculty || "Director Faculty"}
+                {directorOfMonth?.faculty || "\u00A0"}
               </p>
               <p className="font-poppins font-medium italic text-[17px] text-white leading-relaxed">
-                {directorOfMonth?.quote || "Director quote goes here."}
+                {directorOfMonth?.quote || "\u00A0"}
               </p>
-            </div>
+            </MotionWrapper>
 
             {/* Rotaractor of the Month (Dynamic) */}
-            <div className="bg-pink-600 rounded-[37px] shadow-lg p-8 relative flex flex-col">
+            <MotionWrapper delay={0.2} variant="fadeInRight" whileHover={{ y: -5 }} className="bg-pink-600 rounded-[37px] shadow-lg p-8 relative flex flex-col transition-shadow hover:shadow-2xl">
               <p className="font-playfair font-medium text-[32px] text-white mb-1">
                 Rotaractor
               </p>
@@ -954,31 +704,51 @@ export default function Home() {
               </p>
               <img
                 src={
-                  rotaractorOfMonth?.image
-                    ? `https://res.cloudinary.com/dvqoiqzxe/image/upload/${rotaractorOfMonth.image}`
+                  rotaractorFlyers.length > 0
+                    ? `https://res.cloudinary.com/dvqoiqzxe/image/upload/${rotaractorFlyers[rotaractorFlyerIndex]}`
                     : "https://placehold.co/300x300?text=Rotaractor+of+Month"
                 }
                 alt="Rotaractor of the Month"
-                className="bg-white rounded-[32px] h-[320px] mb-6 flex-shrink-0 w-full object-cover"
+                className="rounded-[32px] h-[360px] lg:h-[420px] mb-6 flex-shrink-0 w-full object-contain"
               />
+              {rotaractorFlyers.length > 1 && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  {rotaractorFlyers.map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setRotaractorFlyerIndex(index)}
+                      className={`w-2.5 h-2.5 rounded-full transition ${
+                        index === rotaractorFlyerIndex
+                          ? "bg-white"
+                          : "bg-white/40 hover:bg-white/70"
+                      }`}
+                      aria-label={`Show Rotaractor flyer ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
 
               <p className="font-playfair font-medium text-[28px] text-white mb-1">
-                {rotaractorOfMonth?.name || "Rotaractor Name"}
+                {rotaractorOfMonth?.name || "\u00A0"}
               </p>
               <p className="font-poppins text-[19px] text-[#d9d9d9] mb-6">
-                {rotaractorOfMonth?.faculty || "Rotaractor Faculty"}
+                {rotaractorOfMonth?.faculty || "\u00A0"}
               </p>
               <p className="font-poppins font-medium italic text-[17px] text-white leading-relaxed">
-                {rotaractorOfMonth?.quote || "Rotaractor quote goes here."}
+                {rotaractorOfMonth?.quote || "\u00A0"}
               </p>
-            </div>
+            </MotionWrapper>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Leadership Section */}
       <section id="leadership" className="bg-[#e9e9e9] py-16 lg:py-24">
-        <div className="max-w-6xl mx-auto px-4">
+        <MotionWrapper
+          className="max-w-6xl mx-auto px-4"
+          viewport={{ once: true, amount: 0 }}
+        >
           <h2 className="font-playfair font-medium text-4xl lg:text-5xl text-black text-center mb-6">
             Our Leadership
           </h2>
@@ -992,15 +762,26 @@ export default function Home() {
             {/* Leadership Grid - All 9 Members */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {leadershipTeam.map((member, i) => (
-                <div key={member.id || i} className="flex flex-col">
-                  <img
-                    src={
-                      member.photo ||
-                      "/assets/leadership/placeholder-230x247.png"
-                    }
-                    alt={member.name}
-                    className="bg-pink-600 rounded-[32px] aspect-[230/247] mb-4 object-cover"
-                  />
+                <MotionWrapper
+                  key={member.id || i}
+                  delay={i * 0.1} // Staggered delay for each card
+                  variant="fadeInUp"
+                  className="flex flex-col"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden rounded-[32px] mb-4 aspect-[230/247]"
+                  >
+                    <img
+                      src={
+                        member.photo ||
+                        "/assets/leadership/placeholder-230x247.png"
+                      }
+                      alt={member.name}
+                      className="bg-pink-600 w-full h-full object-cover"
+                    />
+                  </motion.div>
                   <p className="font-playfair font-medium text-lg text-text-pink-600 mb-1">
                     {member.role}
                   </p>
@@ -1039,11 +820,11 @@ export default function Home() {
                       {member.phone}
                     </span>
                   </div>
-                </div>
+                </MotionWrapper>
               ))}
             </div>
           </div>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Contribution Section */}
@@ -1054,8 +835,7 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
-
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+        <MotionWrapper className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
           <h2 className="font-playfair font-medium text-3xl lg:text-5xl text-white mb-6">
             Every Contribution Matters!
           </h2>
@@ -1066,7 +846,7 @@ export default function Home() {
           <p className="font-poppins font-medium text-lg text-white">
             Contact us at: info@rotaractsusl.org
           </p>
-        </div>
+        </MotionWrapper>
       </section>
 
       {/* Footer */}

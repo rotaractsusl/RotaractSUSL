@@ -1,12 +1,18 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext"; // Ensure this path matches where you saved AuthContext
+import { Toaster } from 'sonner';
+import Snow from "./components/Snow";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
+  metadataBase: new URL('https://www.rotaractsusl.org'),
   title: "Rotaract SUSL",
-  description: "Serve. Grow. Lead.",
+  description: "Official website of Rotaract Club of Sabaragamuwa University of Sri Lanka.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -14,7 +20,14 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
+          <Toaster richColors position="top-center" />
+          <Snow />
           {children}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `console.log("%c Curious? 👀 \\nCheck out the creators at %c/developers", "color: #ec4899; font-size: 16px; font-weight: bold;", "color: #3b82f6; font-size: 16px; font-weight: bold; text-decoration: underline;")`
+            }}
+          />
         </AuthProvider>
       </body>
     </html>

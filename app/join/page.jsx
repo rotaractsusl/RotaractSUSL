@@ -5,12 +5,77 @@ import React, { useState } from 'react';
 import { images } from '../../assets/images';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import MotionWrapper from '../components/MotionWrapper';
 import { Loader2, AlertCircle, Mail } from 'lucide-react';
 
 import { auth, db } from "../../lib/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+
+const facultyData = {
+    "Faculty of Agricultural Sciences": [
+        "Department of Export Agriculture",
+        "Department of Livestock Production",
+        "Department of Agribusiness Management"
+    ],
+    "Faculty of Applied Sciences": [
+        "Department of Food Science and Technology",
+        "Department of Natural Resources",
+        "Department of Physical Sciences and Technology",
+        "Department of Sport Sciences and Physical Education",
+        " - "
+    ],
+    "Faculty of Computing": [
+        "Department of Computing and Information Systems",
+        "Department of Information Systems",
+        "Department of Software Engineering",
+        "Department of Data Science"
+    ],
+    "Faculty of Geomatics": [
+        "Department of Remote Sensing and GIS",
+        "Department of Surveying and Geodesy",
+        " - "
+    ],
+    "Faculty of Management Studies": [
+        "Department of Accountancy & Finance",
+        "Department of Business Management",
+        "Department of Marketing Management",
+        "Department of Tourism Management"
+    ],
+    "Faculty of Medicine": [
+        "Department of Anatomy",
+        "Department of Biochemistry",
+        "Department of Physiology",
+        "Department of Microbiology",
+        "Department of Parasitology",
+        "Department of Pharmacology",
+        "Department of Community Medicine",
+        "Department of Forensic Medicine and Toxicology",
+        "Department of Pathology",
+        "Department of Primary Care and Family Medicine",
+        "Department of Medicine",
+        "Department of Paediatrics",
+        "Department of Surgery",
+        "Department of Psychiatry",
+        "Department of Obstetrics and Gynecology",
+        "Medical Education Unit"
+    ],
+    "Faculty of Social Sciences and Languages": [
+        "Department of Economics and Statistics",
+        "Department of English Language Teaching",
+        "Department of Geography and Environmental Management",
+        "Department of Information Technology",
+        "Department of Languages",
+        "Department of Social Sciences",
+        " - "
+    ],
+    "Faculty of Technology": [
+        "Department of Biosystems Technology",
+        "Department of Engineering Technology",
+        " - "
+    ]
+};
 
 export default function JoinUs() {
     const router = useRouter();
@@ -23,7 +88,15 @@ export default function JoinUs() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => {
+            if (name === "faculty") {
+                return { ...prev, [name]: value, department: "" };
+            }
+            return { ...prev, [name]: value };
+        });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -74,7 +147,10 @@ export default function JoinUs() {
             <div className="bg-gray-50 min-h-screen flex flex-col relative">
                 <Navbar currentPage="join" />
                 <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-                    <div className="bg-white p-10 rounded-[40px] shadow-2xl border border-gray-100 max-w-xl w-full">
+                    <MotionWrapper
+                        className="bg-white p-10 rounded-[40px] shadow-2xl border border-gray-100 max-w-xl w-full"
+                        variant="scaleUp"
+                    >
                         <div className="bg-pink-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Mail className="text-pink-600 w-12 h-12" />
                         </div>
@@ -89,13 +165,13 @@ export default function JoinUs() {
                                 Please check your Spam or Junk folder if you don't see the email.
                             </p>
                         </div>
-                        <button 
-                            onClick={() => router.push('/')} 
+                        <button
+                            onClick={() => router.push('/')}
                             className="w-full bg-gray-900 text-white py-4 rounded-xl font-poppins font-bold hover:bg-gray-800 transition shadow-lg"
                         >
                             Back to Home
                         </button>
-                    </div>
+                    </MotionWrapper>
                 </div>
                 <div className="py-6 text-center text-gray-400 text-xs font-poppins">
                     © 2025 Rotaract Club of Sabaragamuwa University of Sri Lanka.
@@ -111,7 +187,7 @@ export default function JoinUs() {
 
             {/* Hero Banner */}
             <section className="relative w-full max-w-[1440px] mx-auto px-4 pt-4 lg:pt-8">
-                <div className="relative rounded-[43px] overflow-hidden h-[220px] md:h-[300px]">
+                <MotionWrapper className="relative rounded-[43px] overflow-hidden h-[220px] md:h-[300px]">
                     <img src={images.imgRectangle66} alt="Hands united" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center px-6">
                         <h1 className="font-playfair font-medium text-2xl md:text-[47px] text-white mb-4 leading-tight">
@@ -121,13 +197,17 @@ export default function JoinUs() {
                             Ready to find your purpose, develop professional skills, and create real, lasting impact in the Sabaragamuwa community? Fill out the application below to start your journey with us.
                         </p>
                     </div>
-                </div>
+                </MotionWrapper>
             </section>
 
             {/* Form Panel */}
             <section className="py-10 md:py-16 flex-1 px-4">
                 <div className="max-w-[1140px] mx-auto">
-                    <div className="bg-[#eeeeee] rounded-[43px] shadow-[0_0_16px_5px_rgba(0,0,0,0.25)] px-6 md:px-14 py-10 md:py-14">
+                    <MotionWrapper
+                        className="bg-[#eeeeee] rounded-[43px] shadow-[0_0_16px_5px_rgba(0,0,0,0.25)] px-6 md:px-14 py-10 md:py-14"
+                        variant="fadeInUp"
+                        delay={0.2}
+                    >
 
                         {/* Error Message Display */}
                         {error && (
@@ -137,7 +217,7 @@ export default function JoinUs() {
                                     {error}
                                     {error.includes("already registered") && (
                                         <div className="mt-2">
-                                            <button 
+                                            <button
                                                 onClick={() => router.push('/login')}
                                                 className="font-bold underline hover:text-red-900"
                                             >
@@ -189,14 +269,9 @@ export default function JoinUs() {
                                         className="w-full h-[68px] border-2 border-pink-600 rounded-[16px] bg-white px-4 font-poppins text-sm focus:outline-none focus:ring-2 focus:ring-pink-600"
                                     >
                                         <option value="" disabled hidden>Choose faculty</option>
-                                        <option value="Computing">Faculty of Computing</option>
-                                        <option value="Applied Sciences">Applied Sciences</option>
-                                        <option value="Management Studies">Management Studies</option>
-                                        <option value="Social Sciences">Social Sciences & Languages</option>
-                                        <option value="Agricultural Sciences">Agricultural Sciences</option>
-                                        <option value="Geomatics">Geomatics</option>
-                                        <option value="Medicine">Medicine</option>
-                                        <option value="Technology">Technology</option>
+                                        {Object.keys(facultyData).map((faculty) => (
+                                            <option key={faculty} value={faculty}>{faculty}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -204,11 +279,19 @@ export default function JoinUs() {
                             {/* Department */}
                             <div>
                                 <label htmlFor="department" className="block font-poppins font-medium text-[14px] md:text-[18px] text-pink-600 mb-1">Department</label>
-                                <input
-                                    id="department" name="department" type="text" placeholder="e.g. Computing and Information System"
+                                <select
+                                    id="department" name="department" required
                                     value={formData.department} onChange={handleChange}
-                                    className="w-full h-[68px] border-2 border-pink-600 rounded-[16px] bg-transparent px-4 font-poppins text-sm focus:outline-none focus:ring-2 focus:ring-pink-600"
-                                />
+                                    disabled={!formData.faculty}
+                                    className="w-full h-[68px] border-2 border-pink-600 rounded-[16px] bg-white px-4 font-poppins text-sm focus:outline-none focus:ring-2 focus:ring-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <option value="" disabled hidden>
+                                        {formData.faculty ? "Choose department" : "Select a faculty first"}
+                                    </option>
+                                    {formData.faculty && facultyData[formData.faculty]?.map((dept) => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Contact No */}
@@ -223,9 +306,10 @@ export default function JoinUs() {
 
                             {/* Email */}
                             <div>
-                                <label htmlFor="email" className="block font-poppins font-medium text-[14px] md:text-[18px] text-pink-600 mb-1">Student Email</label>
+                                <label htmlFor="email" className="block font-poppins font-medium text-[14px] md:text-[18px] text-pink-600 mb-1">University Email Address</label>
+                                <p className="text-xs text-slate-500 mb-2 font-poppins">You strictly need to use your university provided email address.</p>
                                 <input
-                                    id="email" name="email" type="email" required placeholder="It is compulsury to use your Student Email"
+                                    id="email" name="email" type="email" required placeholder="Enter your university email address"
                                     value={formData.email} onChange={handleChange}
                                     className="w-full h-[68px] border-2 border-pink-600 rounded-[16px] bg-transparent px-4 font-poppins text-sm focus:outline-none focus:ring-2 focus:ring-pink-600"
                                 />
@@ -270,11 +354,11 @@ export default function JoinUs() {
                                 </button>
                             </div>
                         </form>
-                    </div>
+                    </MotionWrapper>
                 </div>
             </section>
 
             <Footer />
-        </div>
+        </div >
     );
 }
